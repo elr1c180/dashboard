@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Анализ рынка кофе - Дашборд</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+  }
+  
+  header {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 20px 32px;
+    border-bottom: 1px solid #e1e8ed;
+  }
+  
+  header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+  
+  header h1 span {
+    color: #5b6c8f;
+  }
+  
+  header p {
+    font-size: 13px;
+    color: #7a8b9f;
+    margin-top: 6px;
+  }
+  
+  nav {
+    display: flex;
+    gap: 4px;
+    padding: 16px 32px;
+    background: white;
+    border-bottom: 1px solid #e1e8ed;
+    overflow-x: auto;
+  }
+  
+  nav button {
+    background: transparent;
+    color: #5b6c8f;
+    border: 1px solid transparent;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  
+  nav button:hover {
+    background: #f0f2f5;
+    color: #2c3e50;
+  }
+  
+  nav button.active {
+    background: #4a90e2;
+    color: white;
+  }
+  
+  .page {
+    display: none;
+    padding: 28px 32px;
+  }
+  
+  .page.active {
+    display: block;
+  }
+  
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  
+  .kpi {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .kpi .label {
+    font-size: 12px;
+    color: #7a8b9f;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  
+  .kpi .value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 8px;
+    color: #2c3e50;
+  }
+  
+  .kpi .sub {
+    font-size: 12px;
+    color: #7a8b9f;
+    margin-top: 6px;
+  }
+  
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .card {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  
+  .card h3 span {
+    color: #7a8b9f;
+    font-weight: 400;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .insights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .insight {
+    background: #f8f9fb;
+    border-left: 3px solid #4a90e2;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #34495e;
+  }
+  
+  @media (max-width: 1100px) {
+    .kpi-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+    header, nav, .page {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Аналитика рынка <span>кофе</span></h1>
+    <p>Потребительская аналитика на основе панельных данных</p>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('market')">Рынок в целом</button>
+  <button onclick="showPage('formats')">Форматы</button>
+  <button onclick="showPage('brands')">Бренды</button>
+  <button onclick="showPage('networks')">Торговые сети</button>
+  <button onclick="showPage('insights')">Аналитические выводы</button>
+</nav>
+
+<!-- Страница 1: Рынок в целом -->
+<div class="page active" id="page-market">
+  <div class="kpi-row" id="market-kpis"></div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Форматы кофе <span>по количеству единиц</span></h3>
+      <canvas id="chartFmt" height="260"></canvas>
+    </div>
+    <div class="card">
+      <h3>Тип упаковки <span>доля в продажах</span></h3>
+      <canvas id="chartPack" height="260"></canvas>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Вкусовые профили <span>по количеству единиц</span></h3>
+      <canvas id="chartFlavors" height="280"></canvas>
+    </div>
+    <div class="card">
+      <h3>Тип обжарки <span>по количеству</span></h3>
+      <canvas id="chartRoast" height="280"></canvas>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Продажи по регионам <span>количество единиц</span></h3>
+      <canvas id="chartRegion" height="260"></canvas>
+    </div>
+    <div class="card">
+      <h3>Топ торговых сетей <span>по выручке</span></h3>
+      <canvas id="chartNetsRev" height="260"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Страница 2: Форматы -->
+<div class="page" id="page-formats">
+  <div class="kpi-row" id="formats-kpis"></div>
+  
+  <!-- Карточка "Доля форматов" на всю ширину -->
+  <div class="card full-width" style="margin-bottom: 20px;">
+    <h3>Доля форматов <span>в натуральных единицах</span></h3>
+    <canvas id="chartFmtPie" height="300"></canvas>
+  </div>
+  
+  <div class="card full-width">
+    <h3>Форматы кофе - детальное сравнение <span>количество единиц</span></h3>
+    <canvas id="chartFmtBar" height="200"></canvas>
+  </div>
+</div>
+
+<!-- Страница 3: Бренды -->
+<div class="page" id="page-brands">
+  <div class="kpi-row" id="brands-kpis"></div>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Топ-12 брендов <span>по количеству единиц</span></h3>
+      <canvas id="chartBrands" height="340"></canvas>
+    </div>
+    <div class="card">
+      <h3>Доля топ-брендов <span>по количеству</span></h3>
+      <canvas id="chartBrandsPie" height="340"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Страница 4: Торговые сети (без детальной аналитики, только топ) -->
+<div class="page" id="page-networks">
+  <div class="kpi-row" id="networks-kpis"></div>
+  <div class="card full-width">
+    <h3>Топ сетей по количеству единиц</h3>
+    <canvas id="chartNetsQty" height="300"></canvas>
+  </div>
+</div>
+
+<!-- Страница 5: Аналитические выводы -->
+<div class="page" id="page-insights">
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <h3>Структура рынка</h3>
+        <div class="insights" id="insights1"></div>
+      </div>
+      <div class="card">
+        <h3>Форматы и граммовки</h3>
+        <div class="insights" id="insights2"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <h3>Сети и каналы продаж</h3>
+        <div class="insights" id="insights3"></div>
+      </div>
+      <div class="card">
+        <h3>Вкусовые тренды</h3>
+        <div class="insights" id="insights4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = {};
+
+fetch("/api/market")
+  .then(res => res.json())
+  .then(data => {
+    DATA = data;
+    renderAll();
+  });
+
+const PALETTE = ['#4a90e2', '#50c878', '#f5a623', '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
+
+function makeChart(id, type, labels, values, opts = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  if (ctx._chart) ctx._chart.destroy();
+  
+  const config = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display: opts.legend !== false, position: 'bottom', labels: { font: { size: 11 } } },
+      tooltip: { backgroundColor: '#2c3e50', titleColor: '#fff', bodyColor: '#ecf0f1' }
+    }
+  };
+  
+  let chartConfig;
+  if (type === 'doughnut' || type === 'pie') {
+    chartConfig = {
+      type: type,
+      data: { labels: labels, datasets: [{ data: values, backgroundColor: PALETTE, borderWidth: 0 }] },
+      options: { ...config, cutout: type === 'doughnut' ? '60%' : 0 }
+    };
+  } else if (type === 'bar') {
+    chartConfig = {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ data: values, backgroundColor: '#4a90e2', borderRadius: 6 }] },
+      options: { ...config, plugins: { ...config.plugins, legend: { display: false } } }
+    };
+  } else if (type === 'horizontalBar') {
+    chartConfig = {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ data: values, backgroundColor: '#50c878', borderRadius: 6 }] },
+      options: { ...config, indexAxis: 'y', plugins: { ...config.plugins, legend: { display: false } } }
+    };
+  }
+  
+  const chart = new Chart(ctx, chartConfig);
+  ctx._chart = chart;
+  return chart;
+}
+
+function renderAll() {
+  renderMarket();
+  renderFormats();
+  renderBrands();
+  renderNetworks();
+  renderInsights();
+}
+
+function renderMarket() {
+  if (DATA.fmt_data) {
+    makeChart('chartFmt', 'doughnut', 
+      DATA.fmt_data.map(d=>d.label), DATA.fmt_data.map(d=>d.value));
+  }
+  if (DATA.pack_data) {
+    makeChart('chartPack', 'doughnut',
+      DATA.pack_data.map(d=>d.label), DATA.pack_data.map(d=>d.value));
+  }
+  if (DATA.flavor_data) {
+    makeChart('chartFlavors', 'horizontalBar',
+      DATA.flavor_data.map(d=>d.label), DATA.flavor_data.map(d=>d.value));
+  }
+  if (DATA.roast_sorted) {
+    makeChart('chartRoast', 'horizontalBar',
+      DATA.roast_sorted.map(d=>d.label), DATA.roast_sorted.map(d=>d.value));
+  }
+  if (DATA.region_data) {
+    makeChart('chartRegion', 'bar',
+      DATA.region_data.map(d=>d.label), DATA.region_data.map(d=>d.value));
+  }
+  if (DATA.nets_revenue) {
+    const revK = DATA.nets_revenue.map(d => Math.round(d.value/1000));
+    makeChart('chartNetsRev', 'horizontalBar',
+      DATA.nets_revenue.map(d=>d.label), revK);
+  }
+  
+  const totalQty = DATA.fmt_data ? DATA.fmt_data.reduce((a,b)=>a+b.value,0) : 217000;
+  document.getElementById('market-kpis').innerHTML = `
+    <div class="kpi"><div class="label">Транзакций кофе</div><div class="value">148K</div><div class="sub">всего строк данных</div></div>
+    <div class="kpi"><div class="label">Продано единиц</div><div class="value">${Math.round(totalQty/1000)}K</div><div class="sub">суммарное количество</div></div>
+    <div class="kpi"><div class="label">Торговых сетей</div><div class="value">80+</div><div class="sub">уникальных ритейлеров</div></div>
+    <div class="kpi"><div class="label">Брендов</div><div class="value">150+</div><div class="sub">уникальных марок</div></div>
+  `;
+}
+
+function renderFormats() {
+  if (DATA.fmt_data) {
+    const fmts = DATA.fmt_data.filter(d => d.label !== 'Прочее');
+    makeChart('chartFmtPie', 'pie',
+      fmts.map(d=>d.label), fmts.map(d=>d.value));
+    makeChart('chartFmtBar', 'bar',
+      DATA.fmt_data.map(d=>d.label), DATA.fmt_data.map(d=>d.value));
+  }
+  
+  let leader = DATA.fmt_data ? DATA.fmt_data[0] : { label: '3в1', value: 88879 };
+  document.getElementById('formats-kpis').innerHTML = `
+    <div class="kpi"><div class="label">Лидер формат</div><div class="value">${leader.label}</div><div class="sub">${Math.round(leader.value/1000)}K ед.</div></div>
+    <div class="kpi"><div class="label">Топ граммовка (растворимый)</div><div class="value">95 г</div><div class="sub">популярный вес</div></div>
+    <div class="kpi"><div class="label">Топ граммовка (молотый)</div><div class="value">250 г</div><div class="sub">популярный вес</div></div>
+    <div class="kpi"><div class="label">Топ граммовка (зерновой)</div><div class="value">1 кг</div><div class="sub">популярный вес</div></div>
+  `;
+}
+
+function renderBrands() {
+  if (DATA.brands_data) {
+    makeChart('chartBrands', 'horizontalBar',
+      DATA.brands_data.map(d=>d.label), DATA.brands_data.map(d=>d.value));
+    
+    const top6 = DATA.brands_data.slice(0,6);
+    const rest = DATA.brands_data.slice(6).reduce((a,b)=>a+b.value,0);
+    makeChart('chartBrandsPie', 'doughnut',
+      [...top6.map(d=>d.label), 'Остальные'], [...top6.map(d=>d.value), rest]);
+    
+    const top3share = Math.round((DATA.brands_data.slice(0,3).reduce((a,b)=>a+b.value,0) / DATA.brands_data.reduce((a,b)=>a+b.value,0)) * 100);
+    document.getElementById('brands-kpis').innerHTML = `
+      <div class="kpi"><div class="label">Бренд 1</div><div class="value">${DATA.brands_data[0]?.label || 'Nescafe'}</div><div class="sub">${Math.round(DATA.brands_data[0]?.value/1000)}K ед.</div></div>
+      <div class="kpi"><div class="label">Бренд 2</div><div class="value">${DATA.brands_data[1]?.label || 'MacCoffee'}</div><div class="sub">${Math.round(DATA.brands_data[1]?.value/1000)}K ед.</div></div>
+      <div class="kpi"><div class="label">Бренд 3</div><div class="value">${DATA.brands_data[2]?.label || 'Monarch'}</div><div class="sub">${Math.round(DATA.brands_data[2]?.value/1000)}K ед.</div></div>
+      <div class="kpi"><div class="label">Топ-3 доля</div><div class="value">${top3share}%</div><div class="sub">концентрация рынка</div></div>
+    `;
+  }
+}
+
+function renderNetworks() {
+  if (DATA.nets_qty_data) {
+    makeChart('chartNetsQty', 'bar',
+      DATA.nets_qty_data.map(d=>d.label), DATA.nets_qty_data.map(d=>d.value));
+  }
+  
+  let topQty = DATA.nets_qty_data ? DATA.nets_qty_data[0]?.label : 'Магнит';
+  document.getElementById('networks-kpis').innerHTML = `
+    <div class="kpi"><div class="label">Лидер по количеству</div><div class="value">${topQty}</div><div class="sub">лидер продаж</div></div>
+    <div class="kpi"><div class="label">2 по количеству</div><div class="value">Пятёрочка</div><div class="sub">второе место</div></div>
+    <div class="kpi"><div class="label">E-com лидер</div><div class="value">Ozon</div><div class="sub">онлайн продажи</div></div>
+    <div class="kpi"><div class="label">Топ-5 доля</div><div class="value">73%</div><div class="sub">рынка</div></div>
+  `;
+}
+
+function renderInsights() {
+  document.getElementById('insights1').innerHTML = `
+    <div class="insight"><strong>3в1 и Растворимый доминируют:</strong> вместе занимают более 60% продаж в штуках. 3в1 - крупнейший сегмент с долей около 41%, растворимый - около 20%.</div>
+    <div class="insight"><strong>Зерновой кофе растёт:</strong> особенно в e-com каналах (Ozon, Wildberries), где его доля выше, чем в офлайне.</div>
+    <div class="insight"><strong>Молотый кофе - 14.3% рынка:</strong> стабильный сегмент, лидирует в Лента и онлайн-каналах. Популярная граммовка - 250 г.</div>
+    <div class="insight"><strong>Капсулы - нишевый сегмент (1.6%):</strong> высокая цена, но растут в e-com.</div>
+  `;
+  
+  document.getElementById('insights2').innerHTML = `
+    <div class="insight"><strong>3в1 / Кофе-микс:</strong> топ граммовки - 20 г, 14 г, 18 г.</div>
+    <div class="insight"><strong>Растворимый:</strong> топ - 95 г, 190 г, 100 г.</div>
+    <div class="insight"><strong>Молотый:</strong> топ - 250 г, 190 г, 100 г. Растут ароматизированные варианты.</div>
+    <div class="insight"><strong>Зерновой:</strong> топ - 1 кг, 250 г для розничных магазинов.</div>
+  `;
+  
+  document.getElementById('insights3').innerHTML = `
+    <div class="insight"><strong>Магнит и Пятёрочка - лидеры офлайна:</strong> в Магните доминирует 3в1, в Пятёрочке - баланс 3в1 и растворимый.</div>
+    <div class="insight"><strong>E-com: Ozon - лидер:</strong> выше доля молотого и зернового vs офлайн.</div>
+    <div class="insight"><strong>Wildberries:</strong> средние цены вдвое выше чем в офлайне.</div>
+    <div class="insight"><strong>Лента - более зрелый ассортимент:</strong> баланс форматов, высокая доля молотого.</div>
+  `;
+  
+  document.getElementById('insights4').innerHTML = `
+    <div class="insight"><strong>Классик / Original - бесспорный лидер</strong> стандартный кофе без добавок остаётся основой рынка.</div>
+    <div class="insight"><strong>Капучино - второй по популярности вкус</strong> активно представлен в сегменте 3в1.</div>
+    <div class="insight"><strong>Латте и Gold растут</strong> премиальный ориентир в растворимом кофе.</div>
+    <div class="insight"><strong>Арабика в маркетинге</strong> тренд на натуральность и страну происхождения.</div>
+  `;
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
